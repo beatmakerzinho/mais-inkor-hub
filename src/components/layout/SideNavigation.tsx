@@ -2,6 +2,10 @@
 import { Home, Package, Trophy, Share2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
+interface SideNavigationProps {
+  onNavigate?: () => void;
+}
+
 const navigation = [
   { name: "Home", href: "/", icon: Home },
   { name: "Produtos", href: "/produtos", icon: Package },
@@ -9,7 +13,7 @@ const navigation = [
   { name: "Marketing", href: "/marketing", icon: Share2 },
 ];
 
-export function SideNavigation() {
+export function SideNavigation({ onNavigate }: SideNavigationProps) {
   const location = useLocation();
 
   return (
@@ -20,6 +24,7 @@ export function SideNavigation() {
           <Link
             key={item.name}
             to={item.href}
+            onClick={onNavigate}
             className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group ${
               isActive
                 ? "bg-mais-100 text-mais-900"

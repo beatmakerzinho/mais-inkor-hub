@@ -6,7 +6,7 @@ export default function Produtos() {
   return (
     <MainLayout>
       <div className="animate-fadeIn">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Lista de Produtos</h1>
             <p className="mt-1 text-sm text-gray-500">
@@ -24,8 +24,7 @@ export default function Produtos() {
           <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
         </div>
 
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Placeholder cards */}
+        <div className="mt-8 grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
               <div className="w-full h-48 bg-gray-100 rounded-lg mb-4" />

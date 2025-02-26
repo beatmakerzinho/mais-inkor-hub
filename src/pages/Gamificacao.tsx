@@ -16,7 +16,7 @@ export default function Gamificacao() {
           </div>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           <div className="bg-gradient-to-br from-mais-500 to-mais-600 rounded-xl p-6 text-white">
             <div className="flex items-center gap-3">
               <Star className="w-5 h-5" />
@@ -37,7 +37,7 @@ export default function Gamificacao() {
               ].map((mission, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-4 p-4 bg-white rounded-lg border border-gray-200"
+                  className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-white rounded-lg border border-gray-200"
                 >
                   <div className="w-10 h-10 bg-mais-50 rounded-lg grid place-items-center">
                     <Target className="w-5 h-5 text-mais-600" />
