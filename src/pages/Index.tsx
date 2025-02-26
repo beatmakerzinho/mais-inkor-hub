@@ -1,14 +1,20 @@
-// Update this page (the content is just a fallback if you fail to update the page)
 
-const Index = () => {
+import { MainLayout } from "@/components/layout/MainLayout";
+
+export default function Index() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <MainLayout>
+      <div className="max-w-2xl mx-auto text-center animate-fadeIn">
+        <span className="px-3 py-1 text-sm font-medium text-mais-700 bg-mais-50 rounded-full">
+          Bem-vindo ao MAIS INKOR
+        </span>
+        <h1 className="mt-6 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+          Sistema Interno
+        </h1>
+        <p className="mt-4 text-lg text-gray-600">
+          Acesse produtos, participe do programa de gamificação e compartilhe materiais de marketing.
+        </p>
       </div>
-    </div>
+    </MainLayout>
   );
-};
-
-export default Index;
+}
