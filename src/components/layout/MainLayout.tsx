@@ -3,17 +3,38 @@ import { useState } from "react";
 import { Menu, X, Plus, Package, Trophy, Share2 } from "lucide-react";
 import { SideNavigation } from "./SideNavigation";
 import { useLocation } from "react-router-dom";
+import { CreateMissaoModal } from "@/components/modals/CreateMissaoModal";
+import { CreateProdutoModal } from "@/components/modals/CreateProdutoModal";
+import { CreateMaterialModal } from "@/components/modals/CreateMaterialModal";
+import { AuthForm } from "@/components/auth/AuthForm";
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
 
-// This would typically come from an auth system
-const isAdmin = true; // Temporary flag for demonstration
-
 export function MainLayout({ children }: MainLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    // Verificar estado inicial de autenticação
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+    });
+
+    // Escutar mudanças no estado de autenticação
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const getAddButtonLabel = () => {
     switch (location.pathname) {
@@ -41,6 +62,14 @@ export function MainLayout({ children }: MainLayoutProps) {
     }
   };
 
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 grid place-items-center">
+        <AuthForm />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       {/* Mobile menu button */}
@@ -65,7 +94,9 @@ export function MainLayout({ children }: MainLayoutProps) {
           } lg:translate-x-0 transition-transform duration-300 ease-in-out w-64 h-screen bg-white border-r border-gray-200 shadow-sm z-40`}
         >
           <div className="flex items-center gap-2 p-4 border-b">
-            <div className="w-8 h-8 bg-mais-600 rounded-lg grid place-items-center">
+            <div className="w-8 h-8 bg
+
+-mais-600 rounded-lg grid place-items-center">
               <span className="text-white font-semibold">M</span>
             </div>
             <span className="font-semibold text-gray-900">MAIS INKOR</span>
@@ -83,21 +114,27 @@ export function MainLayout({ children }: MainLayoutProps) {
 
         {/* Main content */}
         <main className="flex-1 lg:ml-64 pb-24">
-          <div className="container py-8 px-4 sm:px-6 lg:px-8">
-            {children}
-          </div>
+          <div className="container py-8 px-4 sm:px-6 lg:px-8">{children}</div>
         </main>
       </div>
 
-      {/* Bottom Menu - Only show for admin and on relevant pages */}
-      {isAdmin && location.pathname !== "/" && (
+      {/* Modals */}
+      {location.pathname === "/produtos" && (
+        <CreateProdutoModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      )}
+      {location.pathname === "/gamificacao" && (
+        <CreateMissaoModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      )}
+      {location.pathname === "/marketing" && (
+        <CreateMaterialModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      )}
+
+      {/* Bottom Menu - Only show for authenticated users and on relevant pages */}
+      {isAuthenticated && location.pathname !== "/" && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 lg:left-64 z-40">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <button
-              onClick={() => {
-                // This would typically open a modal or navigate to an add form
-                console.log("Add button clicked:", getAddButtonLabel());
-              }}
+              onClick={() => setIsModalOpen(true)}
               className="w-full flex items-center justify-center gap-2 bg-mais-600 text-white px-4 py-3 rounded-lg hover:bg-mais-700 transition-colors"
             >
               {getAddButtonIcon()}
