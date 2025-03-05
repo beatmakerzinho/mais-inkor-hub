@@ -1,7 +1,12 @@
 
 import { MainLayout } from "@/components/layout/MainLayout";
+import { useEffect } from "react";
 
 export default function Index() {
+  useEffect(() => {
+    console.log("Index page rendered");
+  }, []);
+
   return (
     <MainLayout>
       <div className="max-w-2xl mx-auto text-center animate-fadeIn">

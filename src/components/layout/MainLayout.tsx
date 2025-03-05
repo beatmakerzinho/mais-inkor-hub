@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X, Plus, Package, Trophy, Share2 } from "lucide-react";
 import { SideNavigation } from "./SideNavigation";
 import { useLocation } from "react-router-dom";
@@ -7,7 +7,6 @@ import { CreateMissaoModal } from "@/components/modals/CreateMissaoModal";
 import { CreateProdutoModal } from "@/components/modals/CreateProdutoModal";
 import { CreateMaterialModal } from "@/components/modals/CreateMaterialModal";
 import { AuthForm } from "@/components/auth/AuthForm";
-import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
 interface MainLayoutProps {
@@ -17,14 +16,25 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
   const location = useLocation();
 
   useEffect(() => {
     // Verificar estado inicial de autenticação
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
-    });
+    const checkAuth = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        setIsAuthenticated(!!data.session);
+      } catch (error) {
+        console.error("Erro ao verificar autenticação:", error);
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
 
     // Escutar mudanças no estado de autenticação
     const {
@@ -35,6 +45,8 @@ export function MainLayout({ children }: MainLayoutProps) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  console.log("Auth state:", { isAuthenticated, loading });
 
   const getAddButtonLabel = () => {
     switch (location.pathname) {
@@ -62,7 +74,18 @@ export function MainLayout({ children }: MainLayoutProps) {
     }
   };
 
-  if (!isAuthenticated) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 grid place-items-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-mais-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated === false) {
     return (
       <div className="min-h-screen bg-gray-50 grid place-items-center">
         <AuthForm />
@@ -94,9 +117,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           } lg:translate-x-0 transition-transform duration-300 ease-in-out w-64 h-screen bg-white border-r border-gray-200 shadow-sm z-40`}
         >
           <div className="flex items-center gap-2 p-4 border-b">
-            <div className="w-8 h-8 bg
-
--mais-600 rounded-lg grid place-items-center">
+            <div className="w-8 h-8 bg-mais-600 rounded-lg grid place-items-center">
               <span className="text-white font-semibold">M</span>
             </div>
             <span className="font-semibold text-gray-900">MAIS INKOR</span>
