@@ -19,6 +19,12 @@ export default function Index() {
         <p className="mt-4 text-lg text-gray-600">
           Acesse produtos, participe do programa de gamificação e compartilhe materiais de marketing.
         </p>
+        <div className="mt-8 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900 mb-2">Configuração do Supabase</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Para utilizar todas as funcionalidades, conecte este projeto ao Supabase.
+          </p>
+        </div>
       </div>
     </MainLayout>
   );

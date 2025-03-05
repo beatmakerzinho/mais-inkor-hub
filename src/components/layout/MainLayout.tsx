@@ -7,7 +7,8 @@ import { CreateMissaoModal } from "@/components/modals/CreateMissaoModal";
 import { CreateProdutoModal } from "@/components/modals/CreateProdutoModal";
 import { CreateMaterialModal } from "@/components/modals/CreateMaterialModal";
 import { AuthForm } from "@/components/auth/AuthForm";
-import { supabase } from "@/lib/supabase";
+import { supabase, hasSupabaseCredentials } from "@/lib/supabase";
+import { toast } from "@/hooks/use-toast";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -21,10 +22,21 @@ export function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
 
   useEffect(() => {
+    console.log("MainLayout mounted");
+    
     // Verificar estado inicial de autenticação
     const checkAuth = async () => {
       try {
+        // If we don't have real Supabase credentials, skip authentication
+        if (!hasSupabaseCredentials()) {
+          console.log("No Supabase credentials found, bypassing authentication");
+          setIsAuthenticated(true);
+          setLoading(false);
+          return;
+        }
+
         const { data } = await supabase.auth.getSession();
+        console.log("Auth session data:", data);
         setIsAuthenticated(!!data.session);
       } catch (error) {
         console.error("Erro ao verificar autenticação:", error);
@@ -36,14 +48,17 @@ export function MainLayout({ children }: MainLayoutProps) {
 
     checkAuth();
 
-    // Escutar mudanças no estado de autenticação
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
-    });
+    // Only set up auth state change listener if we have real credentials
+    if (hasSupabaseCredentials()) {
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        console.log("Auth state changed:", !!session);
+        setIsAuthenticated(!!session);
+      });
 
-    return () => subscription.unsubscribe();
+      return () => subscription.unsubscribe();
+    }
   }, []);
 
   console.log("Auth state:", { isAuthenticated, loading });
@@ -80,6 +95,38 @@ export function MainLayout({ children }: MainLayoutProps) {
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-mais-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="mt-4 text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If we don't have Supabase credentials but the page is loaded after the loading state
+  if (!hasSupabaseCredentials() && isAuthenticated === false) {
+    toast({
+      title: "Aviso de configuração",
+      description: "O projeto precisa ser conectado ao Supabase para funcionar completamente.",
+      variant: "destructive",
+    });
+    
+    // Bypass authentication if we don't have credentials
+    setIsAuthenticated(true);
+    return (
+      <div className="min-h-screen bg-gray-50 grid place-items-center">
+        <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-sm">
+          <h1 className="text-xl font-semibold mb-4">Configuração necessária</h1>
+          <p className="mb-4">
+            Este aplicativo requer conexão com Supabase. Por favor, configure as variáveis de ambiente:
+          </p>
+          <ul className="list-disc pl-5 mb-4 text-sm">
+            <li>VITE_SUPABASE_URL</li>
+            <li>VITE_SUPABASE_ANON_KEY</li>
+          </ul>
+          <button
+            onClick={() => setIsAuthenticated(true)}
+            className="w-full bg-mais-600 text-white py-2 rounded-lg hover:bg-mais-700"
+          >
+            Continuar sem autenticação
+          </button>
         </div>
       </div>
     );

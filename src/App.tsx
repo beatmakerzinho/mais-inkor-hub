@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase, hasSupabaseCredentials } from "@/lib/supabase";
 import Index from "./pages/Index";
 import Produtos from "./pages/Produtos";
 import Gamificacao from "./pages/Gamificacao";
@@ -24,6 +24,7 @@ const queryClient = new QueryClient({
 const App = () => {
   useEffect(() => {
     console.log("App mounted");
+    console.log("Has Supabase credentials:", hasSupabaseCredentials());
   }, []);
 
   return (
