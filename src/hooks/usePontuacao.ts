@@ -1,71 +1,115 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase, showActionResult } from '@/lib/supabase';
 import { Pontuacao } from '@/types/database';
-import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
-export function usePontuacao(userId: string) {
+export function usePontuacao() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: pontuacao, isLoading } = useQuery({
-    queryKey: ['pontuacao', userId],
+    queryKey: ['pontuacao', user?.id],
     queryFn: async () => {
+      if (!user) return null;
+
       const { data, error } = await supabase
         .from('pontuacoes')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .single();
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // Se não encontrar pontuação, cria uma nova
-          const { data: newScore, error: createError } = await supabase
-            .from('pontuacoes')
-            .insert([{ user_id: userId, pontos: 0 }])
-            .select()
-            .single();
+      if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "no rows returned"
 
-          if (createError) throw createError;
-          return newScore;
-        }
-        throw error;
+      // If no record exists, return a default with 0 points
+      if (!data) {
+        return {
+          id: '',
+          user_id: user.id,
+          pontos: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
       }
+
       return data as Pontuacao;
     },
+    enabled: !!user,
   });
 
-  const updatePontuacao = useMutation({
-    mutationFn: async (novosPontos: number) => {
+  const addPontos = useMutation({
+    mutationFn: async (pontos: number) => {
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // Check if user has a pontuacao record
+      const { data: existingPontuacao, error: fetchError } = await supabase
+        .from('pontuacoes')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
+
+      if (!existingPontuacao) {
+        // Create a new record
+        const { data, error } = await supabase
+          .from('pontuacoes')
+          .insert([{
+            user_id: user.id,
+            pontos: pontos
+          }])
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      } else {
+        // Update existing record
+        const novosPontos = existingPontuacao.pontos + pontos;
+        const { data, error } = await supabase
+          .from('pontuacoes')
+          .update({
+            pontos: novosPontos,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingPontuacao.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pontuacao'] });
+      showActionResult({ error: null }, "Pontuação atualizada com sucesso");
+    },
+    onError: (error) => {
+      showActionResult({ error }, "");
+      console.error('Erro ao adicionar pontos:', error);
+    }
+  });
+
+  const { data: ranking, isLoading: isRankingLoading } = useQuery({
+    queryKey: ['ranking'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('pontuacoes')
-        .update({ pontos: novosPontos, updated_at: new Date().toISOString() })
-        .eq('user_id', userId)
-        .select()
-        .single();
+        .select('*, user:user_id(email)')
+        .order('pontos', { ascending: false })
+        .limit(10);
 
       if (error) throw error;
       return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pontuacao', userId] });
-      toast({
-        title: "Sucesso!",
-        description: "Pontuação atualizada com sucesso",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro!",
-        description: "Não foi possível atualizar a pontuação",
-        variant: "destructive",
-      });
-      console.error('Erro ao atualizar pontuação:', error);
     },
   });
 
   return {
     pontuacao,
     isLoading,
-    updatePontuacao,
+    addPontos,
+    ranking,
+    isRankingLoading,
+    userRank: ranking?.findIndex(p => p.user_id === user?.id) ?? -1
   };
 }
