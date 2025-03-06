@@ -4,18 +4,42 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useNavigate } from "react-router-dom";
 
 export function AuthForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      // Special case for admin login
+      if (isLogin && email === "admin" && password === "admin") {
+        // Set a special admin session in localStorage
+        localStorage.setItem("adminSession", JSON.stringify({
+          user: {
+            id: "admin-user-id",
+            email: "admin@example.com",
+            user_metadata: { role: "admin" }
+          },
+          expires_at: Date.now() + 24 * 60 * 60 * 1000 // 24 hours from now
+        }));
+        
+        toast({
+          title: "Login de administrador",
+          description: "Login como administrador realizado com sucesso",
+        });
+        
+        // Redirect to home page
+        navigate("/");
+        return;
+      }
+
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
           email,

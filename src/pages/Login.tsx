@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { signIn, signUp, showActionResult } from "@/lib/supabase";
@@ -8,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect } from "react";
+import { toast } from "@/hooks/use-toast";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -27,6 +27,28 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    
+    // Special case for admin login
+    if (email === "admin" && password === "admin") {
+      // Set a special admin session in localStorage
+      localStorage.setItem("adminSession", JSON.stringify({
+        user: {
+          id: "admin-user-id",
+          email: "admin@example.com",
+          user_metadata: { role: "admin" }
+        },
+        expires_at: Date.now() + 24 * 60 * 60 * 1000 // 24 hours from now
+      }));
+      
+      toast({
+        title: "Login de administrador",
+        description: "Login como administrador realizado com sucesso",
+      });
+      
+      navigate("/");
+      setIsLoading(false);
+      return;
+    }
     
     const result = await signIn(email, password);
     
