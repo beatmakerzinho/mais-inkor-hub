@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { signIn, signUp, showActionResult } from "@/lib/supabase";
@@ -10,7 +11,7 @@ import { useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("zinhobeats@gmail.com");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
