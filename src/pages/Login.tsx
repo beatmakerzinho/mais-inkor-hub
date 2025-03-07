@@ -1,21 +1,19 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { signIn, signUp, showActionResult } from "@/lib/supabase";
+import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect } from "react";
-import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 export default function Login() {
   const [email, setEmail] = useState("zinhobeats@gmail.com");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isAdminLogin, setIsAdminLogin] = useState(false);
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
@@ -30,54 +28,87 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
     
-    // Special case for admin login
-    if (isAdminLogin && email === "admin@maisinkor.com" && password === "maisinkor2023") {
-      // Set a special admin session in localStorage
-      localStorage.setItem("adminSession", JSON.stringify({
-        user: {
-          id: "admin-user-id",
-          email: "admin@maisinkor.com",
-          user_metadata: { role: "admin" }
-        },
-        expires_at: Date.now() + 24 * 60 * 60 * 1000 // 24 hours from now
-      }));
+    try {
+      // Special case for admin login
+      if (email === "admin@maisinkor.com" && password === "maisinkor2023") {
+        // Set a special admin session in localStorage
+        localStorage.setItem("adminSession", JSON.stringify({
+          user: {
+            id: "admin-user-id",
+            email: "admin@maisinkor.com",
+            user_metadata: { role: "admin" }
+          },
+          expires_at: Date.now() + 24 * 60 * 60 * 1000 // 24 hours from now
+        }));
+        
+        toast({
+          title: "Login de administrador",
+          description: "Login como administrador realizado com sucesso",
+        });
+        
+        navigate("/");
+        setIsLoading(false);
+        return;
+      }
       
-      toast({
-        title: "Login de administrador",
-        description: "Login como administrador realizado com sucesso",
+      // Regular user login through Supabase
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
       
-      navigate("/");
+      if (error) throw error;
+      
+      toast({
+        title: "Login realizado com sucesso",
+        description: "Bem-vindo de volta!",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro!",
+        description: error instanceof Error ? error.message : "Ocorreu um erro no login",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-      return;
     }
-    
-    const result = await signIn(email, password);
-    
-    if (showActionResult(result, "Login realizado com sucesso")) {
-      navigate("/");
-    }
-    
-    setIsLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (password !== confirmPassword) {
-      showActionResult({ error: { message: "As senhas não conferem" } }, "");
+      toast({
+        title: "Erro!",
+        description: "As senhas não conferem",
+        variant: "destructive",
+      });
       return;
     }
     
     setIsLoading(true);
     
-    const result = await signUp(email, password);
-    
-    if (showActionResult(result, "Cadastro realizado com sucesso! Verifique seu email.")) {
-      // Stay on the login tab
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Conta criada!",
+        description: "Verifique seu email para confirmar o cadastro",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro!",
+        description: error instanceof Error ? error.message : "Ocorreu um erro no cadastro",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   return (
@@ -92,7 +123,7 @@ export default function Login() {
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Cadastro</TabsTrigger>
-            <TabsTrigger value="admin" onClick={() => setIsAdminLogin(true)}>Admin</TabsTrigger>
+            <TabsTrigger value="admin">Admin</TabsTrigger>
           </TabsList>
           
           <TabsContent value="login">

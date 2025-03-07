@@ -20,27 +20,34 @@ export function AuthForm() {
 
     try {
       // Special case for admin login
-      if (isAdminLogin && email === "admin@maisinkor.com" && password === "maisinkor2023") {
-        // Set a special admin session in localStorage
-        localStorage.setItem("adminSession", JSON.stringify({
-          user: {
-            id: "admin-user-id",
-            email: "admin@maisinkor.com",
-            user_metadata: { role: "admin" }
-          },
-          expires_at: Date.now() + 24 * 60 * 60 * 1000 // 24 hours from now
-        }));
-        
-        toast({
-          title: "Login de administrador",
-          description: "Login como administrador realizado com sucesso",
-        });
-        
-        // Redirect to home page
-        navigate("/");
-        return;
+      if (isAdminLogin) {
+        // Check hardcoded admin credentials
+        if (email === "admin@maisinkor.com" && password === "maisinkor2023") {
+          // Set a special admin session in localStorage
+          localStorage.setItem("adminSession", JSON.stringify({
+            user: {
+              id: "admin-user-id",
+              email: "admin@maisinkor.com",
+              user_metadata: { role: "admin" }
+            },
+            expires_at: Date.now() + 24 * 60 * 60 * 1000 // 24 hours from now
+          }));
+          
+          toast({
+            title: "Login de administrador",
+            description: "Login como administrador realizado com sucesso",
+          });
+          
+          navigate("/");
+          setIsLoading(false);
+          return;
+        } else {
+          // Admin credentials are incorrect
+          throw new Error("Credenciais de administrador inválidas");
+        }
       }
 
+      // Regular user login/signup through Supabase
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
           email,
