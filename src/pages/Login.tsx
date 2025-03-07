@@ -15,6 +15,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isAdminLogin, setIsAdminLogin] = useState(false);
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
@@ -30,12 +31,12 @@ export default function Login() {
     setIsLoading(true);
     
     // Special case for admin login
-    if (email === "admin" && password === "admin") {
+    if (isAdminLogin && email === "admin@maisinkor.com" && password === "maisinkor2023") {
       // Set a special admin session in localStorage
       localStorage.setItem("adminSession", JSON.stringify({
         user: {
           id: "admin-user-id",
-          email: "admin@example.com",
+          email: "admin@maisinkor.com",
           user_metadata: { role: "admin" }
         },
         expires_at: Date.now() + 24 * 60 * 60 * 1000 // 24 hours from now
@@ -88,9 +89,10 @@ export default function Login() {
         </CardHeader>
         
         <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Cadastro</TabsTrigger>
+            <TabsTrigger value="admin" onClick={() => setIsAdminLogin(true)}>Admin</TabsTrigger>
           </TabsList>
           
           <TabsContent value="login">
@@ -167,6 +169,39 @@ export default function Login() {
               <CardFooter>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Criando conta..." : "Criar conta"}
+                </Button>
+              </CardFooter>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="admin">
+            <form onSubmit={handleLogin}>
+              <CardContent className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Input
+                    type="email"
+                    placeholder="Email de administrador"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">Email padrão: admin@maisinkor.com</p>
+                </div>
+                <div className="space-y-2">
+                  <Input
+                    type="password"
+                    placeholder="Senha de administrador"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">Senha padrão: maisinkor2023</p>
+                </div>
+              </CardContent>
+              
+              <CardFooter>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Entrando..." : "Entrar como Admin"}
                 </Button>
               </CardFooter>
             </form>

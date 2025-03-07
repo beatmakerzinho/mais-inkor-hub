@@ -11,6 +11,7 @@ export function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("zinhobeats@gmail.com");
   const [password, setPassword] = useState("");
+  const [isAdminLogin, setIsAdminLogin] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,12 +20,12 @@ export function AuthForm() {
 
     try {
       // Special case for admin login
-      if (isLogin && email === "admin" && password === "admin") {
+      if (isAdminLogin && email === "admin@maisinkor.com" && password === "maisinkor2023") {
         // Set a special admin session in localStorage
         localStorage.setItem("adminSession", JSON.stringify({
           user: {
             id: "admin-user-id",
-            email: "admin@example.com",
+            email: "admin@maisinkor.com",
             user_metadata: { role: "admin" }
           },
           expires_at: Date.now() + 24 * 60 * 60 * 1000 // 24 hours from now
@@ -76,12 +77,14 @@ export function AuthForm() {
     <div className="w-full max-w-md mx-auto space-y-6 p-6 bg-white rounded-lg shadow-sm">
       <div className="space-y-2 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">
-          {isLogin ? "Bem-vindo de volta" : "Criar conta"}
+          {isAdminLogin ? "Login de Administrador" : (isLogin ? "Bem-vindo de volta" : "Criar conta")}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {isLogin
-            ? "Entre com suas credenciais"
-            : "Preencha os dados para criar sua conta"}
+          {isAdminLogin 
+            ? "Entre com suas credenciais de administrador" 
+            : (isLogin
+              ? "Entre com suas credenciais"
+              : "Preencha os dados para criar sua conta")}
         </p>
       </div>
 
@@ -89,39 +92,58 @@ export function AuthForm() {
         <div className="space-y-2">
           <Input
             type="email"
-            placeholder="Digite seu email"
+            placeholder={isAdminLogin ? "Email de administrador" : "Digite seu email"}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
+          {isAdminLogin && <p className="text-xs text-muted-foreground">Email padrão: admin@maisinkor.com</p>}
         </div>
         <div className="space-y-2">
           <Input
             type="password"
-            placeholder="Digite sua senha"
+            placeholder={isAdminLogin ? "Senha de administrador" : "Digite sua senha"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+          {isAdminLogin && <p className="text-xs text-muted-foreground">Senha padrão: maisinkor2023</p>}
         </div>
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading
             ? "Carregando..."
-            : isLogin
-            ? "Entrar"
-            : "Criar conta"}
+            : (isAdminLogin 
+              ? "Entrar como Admin" 
+              : (isLogin
+                ? "Entrar"
+                : "Criar conta"))}
         </Button>
       </form>
 
-      <div className="text-center">
+      <div className="flex justify-between text-center">
         <button
           type="button"
-          onClick={() => setIsLogin(!isLogin)}
+          onClick={() => {
+            setIsLogin(!isLogin);
+            setIsAdminLogin(false);
+          }}
           className="text-sm text-mais-600 hover:underline"
         >
           {isLogin
             ? "Não tem uma conta? Criar conta"
             : "Já tem uma conta? Entrar"}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setIsAdminLogin(!isAdminLogin);
+            setIsLogin(true);
+          }}
+          className="text-sm text-blue-600 hover:underline"
+        >
+          {isAdminLogin
+            ? "Voltar para Login normal"
+            : "Login de Administrador"}
         </button>
       </div>
     </div>
